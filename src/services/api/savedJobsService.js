@@ -1,112 +1,161 @@
-// Mock service for managing saved/bookmarked jobs
-// Uses localStorage for persistence until database integration available
+import { getApperClient } from "@/services/apperClient";
 
-const STORAGE_KEY = 'savedJobs';
-
-// Get all saved jobs from localStorage
-const getSavedJobsFromStorage = () => {
+export const getAll = async () => {
   try {
-    const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
+    const apperClient = getApperClient();
+    const response = await apperClient.fetchRecords("saved_job_c", {
+      fields: [
+        {"field": {"Name": "Id"}},
+        {"field": {"Name": "Name"}},
+        {"field": {"Name": "saved_at_c"}},
+        {"field": {"Name": "job_id_c"}, "referenceField": {"field": {"Name": "title_c"}}},
+        {"field": {"Name": "job_id_c"}, "referenceField": {"field": {"Name": "company_c"}}},
+        {"field": {"Name": "job_id_c"}, "referenceField": {"field": {"Name": "location_c"}}}
+      ]
+    });
+
+    if (!response.success) {
+      console.error(response.message);
+      return [];
+    }
+
+    return (response.data || []).map(saved => ({
+      Id: saved.Id,
+      JobId: typeof saved.job_id_c === 'object' ? saved.job_id_c.Id : saved.job_id_c,
+      SavedAt: saved.saved_at_c || new Date().toISOString()
+    }));
   } catch (error) {
-    console.error('Error reading saved jobs from storage:', error);
+    console.error("Error fetching saved jobs:", error?.message || error);
     return [];
   }
 };
 
-// Save jobs array to localStorage
-const saveSavedJobsToStorage = (jobs) => {
+export const getById = async (id) => {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(jobs));
+    const apperClient = getApperClient();
+    const response = await apperClient.getRecordById("saved_job_c", parseInt(id), {
+      fields: [
+        {"field": {"Name": "Id"}},
+        {"field": {"Name": "saved_at_c"}},
+        {"field": {"Name": "job_id_c"}}
+      ]
+    });
+
+    if (!response.success || !response.data) {
+      return null;
+    }
+
+    return {
+      Id: response.data.Id,
+      JobId: typeof response.data.job_id_c === 'object' ? response.data.job_id_c.Id : response.data.job_id_c,
+      SavedAt: response.data.saved_at_c
+    };
   } catch (error) {
-    console.error('Error saving jobs to storage:', error);
+    console.error("Error fetching saved job by ID:", error?.message || error);
+    return null;
   }
 };
 
-// Get all saved jobs
-export const getAll = async () => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const savedJobs = getSavedJobsFromStorage();
-      resolve([...savedJobs]);
-    }, 100);
-  });
-};
-
-// Get saved job by ID
-export const getById = async (id) => {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      const savedJobs = getSavedJobsFromStorage();
-      const job = savedJobs.find(j => j.Id === parseInt(id));
-      if (job) {
-        resolve({ ...job });
-      } else {
-        reject(new Error('Saved job not found'));
-      }
-    }, 100);
-  });
-};
-
-// Check if a job is saved
 export const isJobSaved = async (jobId) => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const savedJobs = getSavedJobsFromStorage();
-      const isSaved = savedJobs.some(j => j.JobId === parseInt(jobId));
-      resolve(isSaved);
-    }, 100);
-  });
+  try {
+    const apperClient = getApperClient();
+    const response = await apperClient.fetchRecords("saved_job_c", {
+      fields: [
+        {"field": {"Name": "Id"}},
+        {"field": {"Name": "job_id_c"}}
+      ],
+      where: [{
+        "FieldName": "job_id_c",
+        "Operator": "EqualTo",
+        "Values": [parseInt(jobId)]
+      }]
+    });
+
+    if (!response.success) {
+      return false;
+    }
+
+    return (response.data || []).length > 0;
+  } catch (error) {
+    console.error("Error checking if job is saved:", error?.message || error);
+    return false;
+  }
 };
 
-// Save a job (create bookmark)
 export const create = async (jobId) => {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      const savedJobs = getSavedJobsFromStorage();
-      
-      // Check if already saved
-      const alreadySaved = savedJobs.some(j => j.JobId === parseInt(jobId));
-      if (alreadySaved) {
-        reject(new Error('Job already saved'));
-        return;
+  try {
+    const alreadySaved = await isJobSaved(jobId);
+    if (alreadySaved) {
+      throw new Error('Job already saved');
+    }
+
+    const apperClient = getApperClient();
+    const response = await apperClient.createRecord("saved_job_c", {
+      records: [{
+        Name: `Saved Job ${jobId}`,
+        job_id_c: parseInt(jobId),
+        saved_at_c: new Date().toISOString()
+      }]
+    });
+
+    if (!response.success) {
+      console.error(response.message);
+      throw new Error(response.message);
+    }
+
+    if (response.results && response.results.length > 0) {
+      const result = response.results[0];
+      if (result.success) {
+        return {
+          Id: result.data.Id,
+          JobId: parseInt(jobId),
+          SavedAt: result.data.saved_at_c
+        };
+      } else {
+        throw new Error(result.message || "Failed to save job");
       }
+    }
 
-      // Generate new ID
-      const newId = savedJobs.length > 0 
-        ? Math.max(...savedJobs.map(j => j.Id)) + 1 
-        : 1;
-
-      const newSavedJob = {
-        Id: newId,
-        JobId: parseInt(jobId),
-        SavedAt: new Date().toISOString()
-      };
-
-      const updatedJobs = [...savedJobs, newSavedJob];
-      saveSavedJobsToStorage(updatedJobs);
-      resolve({ ...newSavedJob });
-    }, 100);
-  });
+    throw new Error("No response data received");
+  } catch (error) {
+    console.error("Error saving job:", error?.message || error);
+    throw error;
+  }
 };
 
-// Remove a saved job (delete bookmark)
 export const deleteSavedJob = async (jobId) => {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      const savedJobs = getSavedJobsFromStorage();
-      const jobIndex = savedJobs.findIndex(j => j.JobId === parseInt(jobId));
-      
-      if (jobIndex === -1) {
-        reject(new Error('Saved job not found'));
-        return;
-      }
+  try {
+    const apperClient = getApperClient();
+    
+    const checkResponse = await apperClient.fetchRecords("saved_job_c", {
+      fields: [{"field": {"Name": "Id"}}],
+      where: [{
+        "FieldName": "job_id_c",
+        "Operator": "EqualTo",
+        "Values": [parseInt(jobId)]
+      }]
+    });
 
-      const updatedJobs = savedJobs.filter(j => j.JobId !== parseInt(jobId));
-      saveSavedJobsToStorage(updatedJobs);
-      resolve({ success: true });
-    }, 100);
-  });
+    if (!checkResponse.success || !checkResponse.data || checkResponse.data.length === 0) {
+      throw new Error('Saved job not found');
+    }
+
+    const savedJobId = checkResponse.data[0].Id;
+
+    const deleteResponse = await apperClient.deleteRecord("saved_job_c", {
+      RecordIds: [savedJobId]
+    });
+
+    if (!deleteResponse.success) {
+      console.error(deleteResponse.message);
+      throw new Error(deleteResponse.message);
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting saved job:", error?.message || error);
+    throw error;
+  }
 };
 
 export default {
