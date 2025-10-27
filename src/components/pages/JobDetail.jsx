@@ -1,17 +1,19 @@
-import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
-import Card from "@/components/atoms/Card";
-import Badge from "@/components/atoms/Badge";
-import Button from "@/components/atoms/Button";
-import Loading from "@/components/ui/Loading";
-import Error from "@/components/ui/Error";
-import ApperIcon from "@/components/ApperIcon";
-import SaveJobButton from "@/components/molecules/SaveJobButton";
-import ApplicationModal from "@/components/organisms/ApplicationModal";
 import { jobService } from "@/services/api/jobService";
 import { applicationService } from "@/services/api/applicationService";
 import { formatDistanceToNow } from "date-fns";
+import { getById } from "@/services/api/savedJobsService";
+import ApperIcon from "@/components/ApperIcon";
+import Badge from "@/components/atoms/Badge";
+import Button from "@/components/atoms/Button";
+import Card from "@/components/atoms/Card";
+import Jobs from "@/components/pages/Jobs";
+import ApplicationModal from "@/components/organisms/ApplicationModal";
+import Loading from "@/components/ui/Loading";
+import Error from "@/components/ui/Error";
+import SaveJobButton from "@/components/molecules/SaveJobButton";
 
 const JobDetail = () => {
   const { id } = useParams();
@@ -19,10 +21,37 @@ const JobDetail = () => {
 const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [hasApplied, setHasApplied] = useState(false);
-  const [showApplicationModal, setShowApplicationModal] = useState(false);
-  const { isAuthenticated, user } = useSelector((state) => state.user);
+const [hasApplied, setHasApplied] = useState(false);
+  const user = useSelector((state) => state.user.user);
 
+  const checkApplicationStatus = async () => {
+    if (!job?.Id) return;
+    
+    try {
+      const applications = await applicationService.getByJobId(job.Id);
+      
+      // Check if current user has applied by matching email
+      if (user && user.emailAddress) {
+        const userHasApplied = applications.some(
+          app => app.email && app.email.toLowerCase() === user.emailAddress.toLowerCase()
+        );
+        setHasApplied(userHasApplied);
+      } else {
+        // If user not logged in, default to not applied
+        setHasApplied(false);
+      }
+    } catch (error) {
+      console.error("Error checking application status:", error?.message || error);
+      // On error, default to showing apply button
+      setHasApplied(false);
+    }
+  };
+
+useEffect(() => {
+    checkApplicationStatus();
+  }, [job?.Id, user]);
+  const [showApplicationModal, setShowApplicationModal] = useState(false);
+  const { isAuthenticated } = useSelector((state) => state.user);
 const loadJob = async () => {
     try {
       setLoading(true);
@@ -183,7 +212,7 @@ const handleApplicationSubmit = async () => {
                 </div>
 <div className="flex items-center gap-3">
                   <SaveJobButton jobId={job.Id} variant="outline" size="lg" />
-                  <Button
+<Button
                     variant="primary"
                     size="lg"
                     onClick={handleApplyClick}
@@ -275,7 +304,7 @@ const handleApplicationSubmit = async () => {
                 </p>
 <div className="flex items-center gap-3">
                   <SaveJobButton jobId={job.Id} variant="outline" size="lg" />
-                  <Button
+<Button
                     variant="primary"
                     size="lg"
                     onClick={handleApplyClick}
