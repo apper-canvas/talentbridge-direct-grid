@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 import Card from "@/components/atoms/Card";
 import Badge from "@/components/atoms/Badge";
 import Button from "@/components/atoms/Button";
@@ -40,7 +41,16 @@ const JobDetail = () => {
     loadJob();
   }, [id]);
 
-  const handleApplyClick = () => {
+const handleApplyClick = () => {
+    const { isAuthenticated } = useSelector((state) => state.user);
+    
+    if (!isAuthenticated) {
+      // Redirect to login with current job URL as redirect parameter
+      const currentPath = window.location.pathname;
+      navigate(`/login?redirect=${encodeURIComponent(currentPath)}`);
+      return;
+    }
+    
     setShowApplicationModal(true);
   };
 
