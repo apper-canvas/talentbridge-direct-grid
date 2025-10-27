@@ -38,8 +38,8 @@ class ApplicationService {
 
       return (response.data || []).map(app => this.transformFromDatabase(app));
     } catch (error) {
-      console.error("Error fetching applications:", error?.message || error);
-return [];
+console.error("Error fetching applications:", error?.message || error);
+      return [];
     }
   }
 
@@ -71,16 +71,16 @@ return [];
       }
 
       return response.data ? this.transformFromDatabase(response.data) : null;
-    } catch (error) {
+} catch (error) {
       console.error("Error fetching application by ID:", error?.message || error);
       return null;
-return null;
     }
   }
 
   async getByStatus(status) {
     try {
       const apperClient = getApperClient();
+      const params = {
         fields: [
           {"field": {"Name": "Id"}},
           {"field": {"Name": "Name"}},
@@ -101,7 +101,9 @@ return null;
           "Operator": "EqualTo",
           "Values": [status]
         }]
-      });
+      };
+
+      const response = await apperClient.fetchRecords(this.tableName, params);
 
       if (!response.success) {
         console.error(response.message);
@@ -114,7 +116,6 @@ return null;
       return [];
     }
   }
-
 async getByJobId(jobId) {
     try {
       const apperClient = getApperClient();
@@ -149,7 +150,6 @@ async getByJobId(jobId) {
       return [];
     }
   }
-
 async create(applicationData) {
     try {
       const apperClient = getApperClient();
@@ -177,7 +177,7 @@ async create(applicationData) {
     } catch (error) {
       console.error("Error creating application:", error?.message || error);
       throw error;
-}
+    }
   }
 
   async update(id, updates) {
@@ -210,7 +210,6 @@ async create(applicationData) {
       throw error;
     }
   }
-
 async withdraw(id) {
     try {
       await this.update(id, { status: "withdrawn" });
@@ -220,7 +219,6 @@ async withdraw(id) {
       throw error;
     }
   }
-
   async updateInterview(id, interviewDetails) {
     try {
       await this.update(id, { 
@@ -243,8 +241,8 @@ interviewDetails: JSON.stringify(interviewDetails)
         updates.status = 'offered';
       } else if (feedback.type === 'rejection') {
         updates.status = 'rejected';
-      }
-await this.update(id, updates);
+}
+      await this.update(id, updates);
       return true;
     } catch (error) {
       console.error("Error adding feedback:", error?.message || error);
@@ -252,7 +250,7 @@ await this.update(id, updates);
     }
   }
 
-async getStatistics() {
+  async getStatistics() {
     try {
       const all = await this.getAll();
       const total = all.length;
@@ -281,11 +279,13 @@ async getStatistics() {
       return {
         total: 0,
         byStatus: {},
-responseRate: 0
+        responseRate: 0
       };
     }
   }
-async delete(id) {
+}
+
+  async delete(id) {
     try {
       const apperClient = getApperClient();
       const response = await apperClient.deleteRecord(this.tableName, {
@@ -303,7 +303,6 @@ async delete(id) {
       throw error;
     }
   }
-
   transformFromDatabase(dbApp) {
     let feedback = null;
     if (dbApp.feedback_c) {
@@ -370,13 +369,12 @@ async delete(id) {
     if (uiApp.interviewDetails) {
       dbApp.interview_details_c = typeof uiApp.interviewDetails === 'string' ? uiApp.interviewDetails : JSON.stringify(uiApp.interviewDetails);
     }
-
-    Object.keys(dbApp).forEach(key => {
+Object.keys(dbApp).forEach(key => {
       if (dbApp[key] === undefined || dbApp[key] === null || dbApp[key] === "") {
         delete dbApp[key];
       }
     });
-return dbApp;
+    return dbApp;
   }
 }
 
