@@ -86,6 +86,7 @@ const handleApplyClick = () => {
   };
 
 const handleApplicationSubmit = async () => {
+    setHasApplied(true);
     setShowApplicationModal(false);
     await checkApplicationStatus();
   };
