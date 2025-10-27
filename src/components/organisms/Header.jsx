@@ -19,7 +19,6 @@ function Header() {
     { name: "My Dashboard", href: "/candidates" },
     { name: "For Employers", href: "/employers" },
     { name: "About", href: "/about" },
-    { name: "Contact", href: "/contact" }
 { name: "Contact", href: "/contact" }
   ];
 
@@ -125,13 +124,14 @@ function Header() {
               </Link>
             ))}
             <div className="px-3 py-2 space-y-2">
-              <Button
+<Button
                 onClick={handlePostJob}
                 variant="primary"
                 size="sm"
                 className="w-full"
               >
                 Post a Job
+              </Button>
               {isAuthenticated ? (
                 <div className="space-y-2">
                   <div className="px-4 py-2 text-sm text-gray-700 border-t border-gray-200">
@@ -160,7 +160,7 @@ function Header() {
                   Login
                 </Button>
               )}
-</div>
+            </div>
           </div>
         </div>
       )}

@@ -1,6 +1,6 @@
-import { getApperClient } from "@/services/apperClient";
 import { jobService } from "@/services/api/jobService";
 import React from "react";
+import { getApperClient } from "@/services/apperClient";
 import { create, getAll, getById } from "@/services/api/savedJobsService";
 import Error from "@/components/ui/Error";
 
@@ -39,11 +39,11 @@ class ApplicationService {
       return (response.data || []).map(app => this.transformFromDatabase(app));
     } catch (error) {
       console.error("Error fetching applications:", error?.message || error);
-42]      return [];
-43]    }
-44]  }
-45]
-async getById(id) {
+return [];
+    }
+  }
+
+  async getById(id) {
     try {
       const apperClient = getApperClient();
       const response = await apperClient.getRecordById(this.tableName, parseInt(id), {
@@ -74,13 +74,13 @@ async getById(id) {
     } catch (error) {
       console.error("Error fetching application by ID:", error?.message || error);
       return null;
+return null;
     }
-78]  }
-79]
-80]  async getByStatus(status) {
+  }
+
+  async getByStatus(status) {
     try {
       const apperClient = getApperClient();
-      const response = await apperClient.fetchRecords(this.tableName, {
         fields: [
           {"field": {"Name": "Id"}},
           {"field": {"Name": "Name"}},
@@ -115,8 +115,8 @@ async getById(id) {
     }
   }
 
-117]  async getByJobId(jobId) {
-118]    try {
+async getByJobId(jobId) {
+    try {
       const apperClient = getApperClient();
       const response = await apperClient.fetchRecords(this.tableName, {
         fields: [
@@ -150,8 +150,8 @@ async getById(id) {
     }
   }
 
-152]  async create(applicationData) {
-153]    try {
+async create(applicationData) {
+    try {
       const apperClient = getApperClient();
       const dbData = this.transformToDatabase(applicationData);
 
@@ -177,10 +177,10 @@ async getById(id) {
     } catch (error) {
       console.error("Error creating application:", error?.message || error);
       throw error;
-179]    }
-180]  }
-181]
-182]  async update(id, updates) {
+}
+  }
+
+  async update(id, updates) {
     try {
       const apperClient = getApperClient();
       const dbData = this.transformToDatabase(updates);
@@ -211,8 +211,8 @@ async getById(id) {
     }
   }
 
-213]  async withdraw(id) {
-214]    try {
+async withdraw(id) {
+    try {
       await this.update(id, { status: "withdrawn" });
       return true;
     } catch (error) {
@@ -224,14 +224,14 @@ async getById(id) {
   async updateInterview(id, interviewDetails) {
     try {
       await this.update(id, { 
-226]        interviewDetails: JSON.stringify(interviewDetails) 
-227]      });
-228]      return true;
-229]    } catch (error) {
-230]      console.error("Error updating interview details:", error?.message || error);
-231]      throw error;
-232]    }
-233]  }
+interviewDetails: JSON.stringify(interviewDetails) 
+      });
+      return true;
+    } catch (error) {
+      console.error("Error updating interview details:", error?.message || error);
+      throw error;
+    }
+  }
 
   async addFeedback(id, feedback) {
     try {
@@ -244,17 +244,16 @@ async getById(id) {
       } else if (feedback.type === 'rejection') {
         updates.status = 'rejected';
       }
-
-247]      await this.update(id, updates);
-248]      return true;
+await this.update(id, updates);
+      return true;
     } catch (error) {
       console.error("Error adding feedback:", error?.message || error);
       throw error;
     }
   }
 
-255]  async getStatistics() {
-256]    try {
+async getStatistics() {
+    try {
       const all = await this.getAll();
       const total = all.length;
 
@@ -282,12 +281,11 @@ async getById(id) {
       return {
         total: 0,
         byStatus: {},
-        responseRate: 0
-285]      };
-286]    }
-287]  }
-288]
-289]  async delete(id) {
+responseRate: 0
+      };
+    }
+  }
+async delete(id) {
     try {
       const apperClient = getApperClient();
       const response = await apperClient.deleteRecord(this.tableName, {
@@ -378,9 +376,8 @@ async getById(id) {
         delete dbApp[key];
       }
     });
-
-381]    return dbApp;
-382]  }
-383]}
+return dbApp;
+  }
+}
 
 export const applicationService = new ApplicationService();
