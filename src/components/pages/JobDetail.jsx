@@ -68,21 +68,7 @@ const loadJob = async () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const checkApplicationStatus = async () => {
-    if (!isAuthenticated || !user || !id) return;
-    
-    try {
-      const applications = await applicationService.getByJobId(parseInt(id));
-      const userApplication = applications.find(
-        app => app.email === user.emailAddress
-      );
-      setHasApplied(!!userApplication);
-    } catch (error) {
-      console.error("Error checking application status:", error?.message || error);
-    }
-  };
+};
 
   useEffect(() => {
     loadJob();
