@@ -18,7 +18,8 @@ const JobDetail = () => {
   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showApplicationModal, setShowApplicationModal] = useState(false);
+const [showApplicationModal, setShowApplicationModal] = useState(false);
+  const { isAuthenticated } = useSelector((state) => state.user);
 
   const loadJob = async () => {
     try {
@@ -42,8 +43,6 @@ const JobDetail = () => {
   }, [id]);
 
 const handleApplyClick = () => {
-    const { isAuthenticated } = useSelector((state) => state.user);
-    
     if (!isAuthenticated) {
       // Redirect to login with current job URL as redirect parameter
       const currentPath = window.location.pathname;
