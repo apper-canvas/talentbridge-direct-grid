@@ -10,24 +10,27 @@ import ApperIcon from "@/components/ApperIcon";
 import SaveJobButton from "@/components/molecules/SaveJobButton";
 import ApplicationModal from "@/components/organisms/ApplicationModal";
 import { jobService } from "@/services/api/jobService";
+import { applicationService } from "@/services/api/applicationService";
 import { formatDistanceToNow } from "date-fns";
 
 const JobDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [job, setJob] = useState(null);
+const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-const [showApplicationModal, setShowApplicationModal] = useState(false);
-  const { isAuthenticated } = useSelector((state) => state.user);
+  const [hasApplied, setHasApplied] = useState(false);
+  const [showApplicationModal, setShowApplicationModal] = useState(false);
+  const { isAuthenticated, user } = useSelector((state) => state.user);
 
-  const loadJob = async () => {
+const loadJob = async () => {
     try {
       setLoading(true);
       setError(null);
       const data = await jobService.getById(parseInt(id));
       if (data) {
         setJob(data);
+        await checkApplicationStatus();
       } else {
         setError("Job not found");
       }
@@ -35,6 +38,20 @@ const [showApplicationModal, setShowApplicationModal] = useState(false);
       setError("Failed to load job details. Please try again.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const checkApplicationStatus = async () => {
+    if (!isAuthenticated || !user || !id) return;
+    
+    try {
+      const applications = await applicationService.getByJobId(parseInt(id));
+      const userApplication = applications.find(
+        app => app.email === user.emailAddress
+      );
+      setHasApplied(!!userApplication);
+    } catch (error) {
+      console.error("Error checking application status:", error?.message || error);
     }
   };
 
@@ -53,8 +70,9 @@ const handleApplyClick = () => {
     setShowApplicationModal(true);
   };
 
-  const handleApplicationSubmit = () => {
+const handleApplicationSubmit = async () => {
     setShowApplicationModal(false);
+    await checkApplicationStatus();
   };
 
   const getJobTypeColor = (type) => {
@@ -169,10 +187,11 @@ const handleApplyClick = () => {
                     variant="primary"
                     size="lg"
                     onClick={handleApplyClick}
+                    disabled={hasApplied}
                     className="w-full md:w-auto"
                   >
-                    <ApperIcon name="Send" className="h-4 w-4 mr-2" />
-                    Apply Now
+                    <ApperIcon name={hasApplied ? "Check" : "Send"} className="h-4 w-4 mr-2" />
+                    {hasApplied ? "Applied" : "Apply Now"}
                   </Button>
                 </div>
               </div>
@@ -260,9 +279,10 @@ const handleApplyClick = () => {
                     variant="primary"
                     size="lg"
                     onClick={handleApplyClick}
+                    disabled={hasApplied}
                   >
-                    <ApperIcon name="Send" className="h-5 w-5 mr-2" />
-                    Apply for this Job
+                    <ApperIcon name={hasApplied ? "Check" : "Send"} className="h-5 w-5 mr-2" />
+                    {hasApplied ? "Applied" : "Apply for this Job"}
                   </Button>
                 </div>
               </div>
