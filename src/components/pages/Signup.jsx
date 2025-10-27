@@ -1,9 +1,12 @@
 import { useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import ApperIcon from "@/components/ApperIcon";
 import { useAuth } from "@/layouts/Root";
 
 function Signup() {
   const { isInitialized } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   
   useEffect(() => {
     if (isInitialized) {
@@ -13,8 +16,15 @@ function Signup() {
   }, [isInitialized]);
   
   return (
-    <div className="flex min-h-screen items-center justify-center bg-surface-50 dark:bg-surface-900">
-      <div className="w-full max-w-md space-y-8 p-8 bg-white dark:bg-surface-800 rounded-lg shadow-md">
+<div className="flex min-h-screen items-center justify-center bg-surface-50 dark:bg-surface-900">
+      <div className="w-full max-w-md space-y-8 p-8 bg-white dark:bg-surface-800 rounded-lg shadow-md relative">
+        <button
+          onClick={() => navigate(-1)}
+          className="absolute top-4 left-4 flex items-center gap-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+        >
+          <ApperIcon name="ArrowLeft" size={20} />
+          <span className="text-sm font-medium">Back</span>
+        </button>
         <div className="text-center">
           <h1 className="text-3xl font-bold text-surface-800 dark:text-surface-100">Create Account</h1>
           <p className="mt-2 text-surface-600 dark:text-surface-400">Sign up for your account</p>
