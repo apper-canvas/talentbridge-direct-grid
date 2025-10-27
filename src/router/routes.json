@@ -11,28 +11,30 @@
       }
     }
   },
-  "/jobs": {
+"/jobs": {
     "allow": {
       "when": {
         "conditions": [
           {
-            "label": "Job listings are public",
-            "rule": "public"
+            "label": "User must be authenticated to view jobs",
+            "rule": "authenticated"
           }
         ]
-      }
+      },
+      "redirectOnDeny": "/login"
     }
   },
-  "/job/:id": {
+"/job/:id": {
     "allow": {
       "when": {
         "conditions": [
           {
-            "label": "Job details are public",
-            "rule": "public"
+            "label": "User must be authenticated to view job details",
+            "rule": "authenticated"
           }
         ]
-      }
+      },
+      "redirectOnDeny": "/login"
     }
   },
   "/candidates": {
