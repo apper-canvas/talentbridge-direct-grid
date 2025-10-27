@@ -280,10 +280,9 @@ interviewDetails: JSON.stringify(interviewDetails)
         total: 0,
         byStatus: {},
         responseRate: 0
-      };
+};
     }
   }
-}
 
   async delete(id) {
     try {
@@ -303,7 +302,7 @@ interviewDetails: JSON.stringify(interviewDetails)
       throw error;
     }
   }
-  transformFromDatabase(dbApp) {
+transformFromDatabase(dbApp) {
     let feedback = null;
     if (dbApp.feedback_c) {
       try {
@@ -369,11 +368,14 @@ interviewDetails: JSON.stringify(interviewDetails)
     if (uiApp.interviewDetails) {
       dbApp.interview_details_c = typeof uiApp.interviewDetails === 'string' ? uiApp.interviewDetails : JSON.stringify(uiApp.interviewDetails);
     }
-Object.keys(dbApp).forEach(key => {
+
+    // Clean up undefined, null, and empty string values
+    Object.keys(dbApp).forEach(key => {
       if (dbApp[key] === undefined || dbApp[key] === null || dbApp[key] === "") {
         delete dbApp[key];
       }
     });
+    
     return dbApp;
   }
 }
